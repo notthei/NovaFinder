@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-// MARK: - CommandResult
+// コマンド類
 
 struct CommandResult {
     let iconName: String
