@@ -1,6 +1,6 @@
 
 # NovaFinder
-macのspotlightは使いずらい！！！！！！
+macのspotlightは使いずらい！！！！！！fk
 
 # 機能
 - **/ + option**にて入力ボックスを表示します。
