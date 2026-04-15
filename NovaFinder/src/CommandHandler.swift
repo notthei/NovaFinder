@@ -179,16 +179,66 @@ class CalcCommandProvider: CommandProvider {
     }
 }
 
+// MARK: - カスタムコマンド (settings.json の customCommands から生成)
+
+class CustomCommandProvider: CommandProvider {
+    let prefix: String
+    private let config: CustomCommandConfig
+
+    init(config: CustomCommandConfig) {
+        self.config = config
+        self.prefix = config.prefix
+    }
+
+    func results(for input: String) -> [CommandResult]? {
+        guard input.hasPrefix(prefix) || prefix.hasPrefix(input) else { return nil }
+        let arg = String(input.dropFirst(min(prefix.count, input.count)))
+            .trimmingCharacters(in: .whitespaces)
+
+        let fullCommand = arg.isEmpty ? config.command : "\(config.command) \(arg)"
+        let escaped = fullCommand
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+
+        return [CommandResult(
+            iconName: config.iconName,
+            iconColor: .systemPurple,
+            title: arg.isEmpty ? prefix : fullCommand,
+            subtitle: arg.isEmpty ? config.subtitle : "Terminalで実行: \(fullCommand)",
+            badgeText: config.badgeText,
+            badgeColor: .systemPurple,
+            action: {
+                let script = """
+                tell application "Terminal"
+                    activate
+                    do script "\(escaped)"
+                end tell
+                """
+                if let appleScript = NSAppleScript(source: script) {
+                    var error: NSDictionary?
+                    appleScript.executeAndReturnError(&error)
+                }
+            }
+        )]
+    }
+}
+
 //
 
 class CommandHandler {
     static let shared = CommandHandler()
 
-    let providers: [CommandProvider] = [
+    private let builtinProviders: [CommandProvider] = [
         ShellCommandProvider(),
         OpenCommandProvider(),
         CalcCommandProvider()
     ]
+
+    var providers: [CommandProvider] {
+        let custom = StorageManager.shared.settings.customCommands
+            .map { CustomCommandProvider(config: $0) }
+        return builtinProviders + custom
+    }
 
     private init() {}
 

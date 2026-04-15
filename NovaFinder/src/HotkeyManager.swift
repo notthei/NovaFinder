@@ -25,8 +25,9 @@ class HotkeyManager {
         action()
     }
 
-    /// Option + / 
     func register() {
+        let config = StorageManager.shared.settings.hotkey
+
         var spec = EventTypeSpec(
             eventClass: OSType(kEventClassKeyboard),
             eventKind: UInt32(kEventHotKeyPressed)
@@ -36,16 +37,31 @@ class HotkeyManager {
             GetApplicationEventTarget(), novaHotkeyCallback, 1, &spec, selfPtr, &handlerRef
         )
 
-        // kVK_ANSI_Slash = 0x2C (44), optionKey = 0x0800
+        let modifiers = carbonModifiers(from: config.modifiers)
         let hkid = EventHotKeyID(signature: fourCC("NOVA"), id: 1)
         RegisterEventHotKey(
-            UInt32(kVK_ANSI_Slash),
-            UInt32(optionKey),
+            UInt32(config.keyCode),
+            modifiers,
             hkid,
             GetApplicationEventTarget(),
             0,
             &hotKeyRef
         )
+    }
+
+    // モディファイア名 → Carbon フラグ
+    private func carbonModifiers(from names: [String]) -> UInt32 {
+        var flags: UInt32 = 0
+        for name in names {
+            switch name.lowercased() {
+            case "option", "alt":    flags |= UInt32(optionKey)
+            case "command", "cmd":   flags |= UInt32(cmdKey)
+            case "shift":            flags |= UInt32(shiftKey)
+            case "control", "ctrl":  flags |= UInt32(controlKey)
+            default: break
+            }
+        }
+        return flags
     }
 
     deinit {

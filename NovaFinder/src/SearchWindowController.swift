@@ -221,8 +221,8 @@ private class CommandCellView: NSTableCellView {
 
 class SearchWindowController: NSObject {
 
-    // フォント
-    private let windowWidth: CGFloat = 660
+    // ウィンドウ幅は settings.json の window.width から取得
+    private var windowWidth: CGFloat { CGFloat(StorageManager.shared.settings.window.width) }
     private let searchHeight: CGFloat = 68
     private let rowHeight: CGFloat = 52
     private let headerHeight: CGFloat = 28
@@ -338,7 +338,8 @@ class SearchWindowController: NSObject {
         let visibleFrame = screen.visibleFrame
         let height = totalHeight()
         let x = visibleFrame.midX - windowWidth / 2
-        let y = visibleFrame.maxY - height - screen.frame.height * 0.22
+        let ratio = CGFloat(StorageManager.shared.settings.window.verticalOffsetRatio)
+        let y = visibleFrame.maxY - height - screen.frame.height * ratio
         return NSRect(x: x, y: y, width: windowWidth, height: height)
     }
 
